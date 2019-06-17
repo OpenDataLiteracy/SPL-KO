@@ -8,14 +8,14 @@ Date: 06.17.2019
 # Seattle Public Library: Beyond Census Data
 
 ## Description  
-ODL intern Karalyn Ostler will help the project sponsor, Seattle Public Library (SPL), identify, extract and transform lesser-used relavent external open data into actionable intelligence for frontline staff. Karalyn will start with assessing the data needs of frontline staff at SPL, asking staff to describe information about the community that would help them plan future services. From the information gathered, Karalyn will identify open datasets from open data sources, like the City of Seattle Open Data portal and State of Washington open data portal, that can be used to address these data needs. Using using Python or R and other data visualization softwares, Karalyn transform the datasets into more useful and easy to understand objects, including but not limited to graphs, maps, and written reports. This process will be throughly documented so that similar future projects can build off of this work and new data can be added to expand materials. Stakeholders served include SPL, SPL frontline staff and the general public that they serve.
+ODL intern Karalyn Ostler will help the project sponsor, Seattle Public Library (SPL), identify, extract and transform lesser-used relavent external open data into actionable intelligence for frontline staff. Karalyn will start with assessing the data needs of frontline staff at SPL, asking staff to describe what information about the community would help them plan future services. From the information gathered, Karalyn will identify open datasets from open data sources, like the City of Seattle Open Data portal and State of Washington open data portal, that can be used to address these data needs. Using Python or R and other data visualization softwares, Karalyn will transform the datasets into more useful and easy to understand objects, including but not limited to graphs, maps, and written reports. This process will be throughly documented so that similar future projects can build off of this work and new data can be added to expand materials. Stakeholders served include SPL, SPL frontline staff and the general public that they serve.
 
 
 ## Goals     
 What is this project supposed to achieve, and why?
 
-- **Assess data needs of SPL frontline staff:** Karalyn will talk to frontline staff at SPL to assess their data needs. Specifically, she will ask them what information about the local community would be most helpful for them to make better informed decisions about SPL services. The gathered information will be used in this project to find datasets and create useful materials for frontline staff to easily use in their planning process. The gathered information will also be stored and documented for use in future data projects done by SPL.
-- **Identify relevant open datasets related to Seattle:** Karalyn will search through several open data repositories with relevant Seattle data to find datasets with relevant information about the local community. This project aims to leverage already exsisting datasets about the local community that have been posted by credible sources and make the information from these datasets more useful for library staff. 
+- **Assess data needs of SPL frontline staff:** Karalyn will communicate with frontline staff at SPL to assess their data needs. Specifically, she will ask them what information about the local community would be most helpful for them to make better informed decisions about SPL services. The gathered information from staff will be used in this project to find open datasets and create useful materials for the frontline staff to easily use in their planning process. The gathered information from staff will also be stored and documented for use in future data projects done by SPL.
+- **Identify relevant open datasets related to Seattle and SPL:** Karalyn will search through several open data repositories with relevant Seattle data to find datasets with relevant information about the local community. This project aims to leverage already exsisting datasets about the local community that have been posted by credible sources and make the information from these datasets more useful for library staff. 
 - **Create materials using selected datasets for use by SPL staff:** Many open datasets are stored in forms that are easily machine readable but can be hard for humans to understand. Karalyn will transform and synthesize selected open datasets into visualizations and reports for use by frontline staff. This project aims to create a comprehensive description of relevant aspects of the community that connect to SPL services. By better understanding the community, the hope is that SPL frontline staff can make more informed decisions and create better services that fit the needs of the community.
 
 <!-- ### Out of scope 
@@ -32,11 +32,11 @@ What will this project produce? This should include items like reports, best pra
 - Assessment report of SPL frontline staff data needs. This includes responses from staff about what they want to know about the local community in relation to SPL services.
 - List of open datasets that relate to possible data needs of SPL staff.
 - Code notebooks with visualizations and data transformations.
-- Written summaries of information found from datasets.
+- Written summaries of findings from datasets.
 
 ### End of project
-- Presentation/Reports of findings for SPL frontline staff.
-- Final written report outlining information found from datasets, including graphs, figure, and reports.
+- Presentations and reports of findings for SPL frontline staff.
+- Final written report outlining all information found from datasets, including graphs, figure, and reports.
 - Public presentation of internship work on August 16, 2019, as required by ODL internship guidelines.
 
 
@@ -49,23 +49,27 @@ What will this project produce? This should include items like reports, best pra
 ## Milestones    
 Create a general timeline for completing each of the deliverables that you listed above. After you have settled on a timeline with feedback from your mentor, you should enter these as `Milestones` in Github's `Issues` tracker. Each task that you perform or plan to perform can then be files as an issue that is attached to a specific milestone.
 
-### Milestone #1
-- Task & Estimated Date of Completion
-- Task & Estimated Date of Completion
+### Assessment of SPL frontline staff data needs
+- Develop information-gathering plan for SPL frontline staff data needs. *By *
+- Collect responses from SPL frontline staff *By *
+- Explore responses and look for commonalities *By *
+- Contact and interview staff for more information about information needs *By *
+- Make list of communities and community elements that might have related datasets *By * 
+### List of relevant open datasets
+- Create list of open datasets about Seattle and surrounding community from open data sources based on information for staff *By *
+- Check quality of 
+- Select datasets that for analysis *By *
+### Code notebooks with figures and transformations
+- Import
+### Written summaries and presentations for staff
 - ...
-### Milestone #2
-- Task & Estimated Date of Completion
-- Task & Estimated Date of Completion
-- ...
-### Milestone #
+### Present internship work
 - ...
 
 ## Changes to the work plan
 Document date and change of work plan here.
 
 ## Communication
-
-- [Customize and add bullets]
 - Update the ODL GitHub repository at least weekly and more as needed, so the internship’s documentation is current and thorough. Notify David and others as needed about updated reports.
 - Respond to SPL staff or ODL team within 24 business hours.
 - Use email, Slack, and other tools for communication with SPL staff and the ODL team.
