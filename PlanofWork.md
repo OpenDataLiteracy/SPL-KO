@@ -1,13 +1,15 @@
 ---
 Title: Plan of work
-Intern Name:
-Sponsor Name:
-Date: 
+Intern Name: Karalyn Ostler
+Sponsor Name: David Christensen, Seattle Public Library
+Date: 06.17.2019
 ---
 
-# Project Title
+# Seattle Public Library: Beyond Census Data
 
 ## Description  
+ODL intern Karalyn Ostler will help the project sponsor, Seattle Public Library (SPL), identify, extract and transform lesser-used relavent external open data into actionable intelligence for frontline staff. Karalyn will start with assessing the data needs of frontline staff in various departments and/or branches of SPL, asking staff to describe information about the community that would help them plan future services. From the information gathered, Karalyn will identify open data sets from open data sources, like the City of Seattle Open Data portal and State of Washington open data portal, that can be used to address these data needs. Using the identified data, Karalyn will use 
+
 In three to five sentences describe the project, sponsor, and relevant information about the summer internship you will be working on. Be sure to include a sentence about the key stakeholders that will be served. 
 
 ## Goals     
