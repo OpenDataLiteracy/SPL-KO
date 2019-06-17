@@ -58,10 +58,10 @@ Create a general timeline for completing each of the deliverables that you liste
 ### List of relevant open datasets
 - Create list of open datasets about Seattle and surrounding community from open data sources based on information from staff. *By Jul 18*
 - Check quality of datasets. *By Jul 22*
-- Select datasets for further analysis. *By 23*
+- Select datasets for further analysis. *By Jul 23*
 ### Code notebooks with figures and transformations
-- Import and clean/tidy datasets. *By July 25*
-- Look for ways to combine multiple datasets about community for richer content. *By July 26*
+- Import and clean/tidy datasets. *By Jul 25*
+- Look for ways to combine multiple datasets about community for richer content. *By Jul 26*
 - Run statistical analysis where applicable. *By Aug 2*
 - Create figures and graphs where applicable. *By Aug 2*
 - Cleanup code notebook and make sure documentation is included where necessary. *By Aug 6*
