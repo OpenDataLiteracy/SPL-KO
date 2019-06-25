@@ -74,8 +74,8 @@ Create a general timeline for completing each of the deliverables that you liste
 - Prepare and present at ODL Showcase event. *By Aug 16*
 
 ## Changes to the work plan
-06.17.19 - First draft of plan completed
-06.24.19 - Second draft with updates based on feedback from ODL team, David Christensen, and Jay Lyman.
+- 06.17.19 - First draft of plan completed
+- 06.24.19 - Second draft with updates based on feedback from ODL team, David Christensen, and Jay Lyman.
 
 ## Communication
 - Update the ODL GitHub repository at least weekly and more as needed, so the internship’s documentation is current and thorough. Notify David and others as needed about updated reports.
