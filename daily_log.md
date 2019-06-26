@@ -39,3 +39,6 @@ Author: Karalyn Ostler
 - Make log for daily activities
 - Research RMarkdown for code notebooks
 
+### June 26th, 2019
+- Create Milesones and issues in GitHub for project
+- Start creating interview questions/script
