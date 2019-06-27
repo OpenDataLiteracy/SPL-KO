@@ -42,3 +42,9 @@ Author: Karalyn Ostler
 ### June 26th, 2019
 - Create Milesones and issues in GitHub for project
 - Start creating interview questions/script
+
+### June 27th, 2019
+- Finish first draft of interview questions
+- Setup time to get SPL badge
+- Email SPL Regional Managers about interviews
+
