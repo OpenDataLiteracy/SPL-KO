@@ -17,7 +17,7 @@ Author: Karalyn Ostler
 
 The goal from this interview is to get to know what you and your staff are currently or soon-to-be working on and might want additional outside information about.  
 
-Are there any special projects or concerns your staff will be addressing this summer or upcoming year that you would like to have additional information about (e.g. about the community or environment)?  
+Are there any new programs, special projects or concerns your staff will be addressing this summer or upcoming year that you would like to have additional information about (e.g. about the community or environment)?  
 
 
 What do you want to know about the community or environment that could help you plan services for your library? Or if you could know anything about the community to better serve SPL, what would it be?  
