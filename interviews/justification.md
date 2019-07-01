@@ -12,8 +12,8 @@ The purpose of conducting interviews for this project is to collect information 
 - Are you trying to answer specific questions, if so what are they? 
 The specific question I am trying to answer is, what information about the community or environment would be most useful for planning future services, advocacy, or events?
 - What are key concepts and definitions of key terminology of study? 
-**Open data:** Data that is freely available for reuse. These data are usally posted in public repositories in the form of tables or spreadsheets. Open data covers a range of subjects and is usually posted by the organization that collected it.
-**Data Transormation:** Most data come in the form of spreadsheets or other tabular files and it can be hard to see patterns or other useful intelligence. By using certain softwares, data can be visualized or manipulated to highlight the useful information in the datasets.
+**Open data:** Data that is freely available for reuse. These data are usually posted in public repositories in the form of tables or spreadsheets. Open data covers a range of subjects and are usually posted by the organization that collected it.
+**Data Transformation:** Most data come in the form of spreadsheets or other tabular files and it can be hard to see patterns or other useful intelligence. By using certain software, data can be visualized or manipulated to highlight the useful information in the datasets.
 - Who are stakeholders of your findings?
 The stakeholders of my findings from these interviews will be other SPL staff, the general public, and possibly the other public libraries. The information found from the interviews will inform this project and give a general idea of what SPL is currently planning.
 
@@ -27,10 +27,10 @@ This project will start with interviewing 2 Regional Managers. If more informati
 
 Recruiting and Participating: 
 - How will participants be recruited? 
-Participants will be recruited based on suggestions from project mentor and availablility.
+Participants will be recruited based on suggestions from project mentor and availability.
 - How will they agree to participate? 
 Participants will be contacted via email. 
 - Where will interviews take place?
 Interviews will be conducted via phone.
 - What will you do with the recordings / transcripts?
-Recordings will be kept for duration of the project. The recordings will be used as a source of notes for informing the rest of the projects progression.
+Recordings will be kept for duration of the project. The recordings will be used as a source of notes for informing the rest of the project's progression.
