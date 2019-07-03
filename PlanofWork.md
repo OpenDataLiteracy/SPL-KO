@@ -14,7 +14,7 @@ ODL intern Karalyn Ostler will help the project sponsor, Seattle Public Library 
 ## Goals     
 What is this project supposed to achieve, and why?
 
-- **Assess data needs of SPL frontline staff:** Karalyn will communicate with 2-3 SPL regional managers to assess their data needs. Specifically, she will ask them what information about the local community would be most helpful for them to make better informed decisions about SPL services. The gathered information from staff will be used in this project to find open datasets and create useful materials for the frontline staff to easily use in their planning process.
+- **Assess data needs of SPL frontline staff:** Karalyn will communicate with 2 SPL regional managers to assess their data needs. Specifically, she will ask them what information about the local community would be most helpful for them to make better informed decisions about SPL services. The gathered information from staff will be used in this project to find open datasets and create useful materials for the frontline staff to easily use in their planning process.
 - **Identify relevant open datasets related to Seattle and SPL:** Karalyn will search through several open data repositories with Seattle data to find datasets with relevant information about the local community that can be combined with existing internal datasets. This project aims to leverage already existing datasets about the local community that have been posted by credible sources and make the information from these datasets more useful for library staff.
 - **Create materials using selected datasets for use by SPL staff:** Many open datasets are stored in forms that are easily machine readable but can be hard for humans to understand. Karalyn will transform and synthesize selected open datasets into visualizations and reports for use by frontline staff. This project aims to create a comprehensive description of relevant elements of the community that connect to SPL services. By better understanding the community, the hope is that SPL frontline staff can make more informed decisions and create better services that fit the needs of the community.
 
@@ -50,8 +50,8 @@ What will this project produce? This should include items like reports, best pra
 Create a general timeline for completing each of the deliverables that you listed above. After you have settled on a timeline with feedback from your mentor, you should enter these as `Milestones` in GitHub's `Issues` tracker. Each task that you perform or plan to perform can then be files as an issue that is attached to a specific milestone.
 
 ### Assessment of SPL frontline staff data needs
-- Create interview question sheet/script. *By Jun 27*
-- Contact 2-3 regional managers and conduct 30-minutes to 1-hour interviews about information needs. *By Jul 5*
+- Create interview question sheet/script. ~~*By Jun 27*~~ **DONE**
+- Contact 2 regional managers and conduct 30-minute interviews about information needs. ~~*By Jul 5*~~ **DONE**
 - From data needs communicated in interviews, identify community and environmental factors that might have related open datasets. *By Jul 9* 
 ### List of relevant open datasets
 - Create list of open datasets about Seattle and surrounding community from open data sources based on information from staff. *By Jul 12*
@@ -66,7 +66,8 @@ Create a general timeline for completing each of the deliverables that you liste
 - Cleanup code notebook and make sure documentation is included where necessary. *By Aug 9*
 ### Written summaries and presentations for staff
 - Write reports with findings for regional managers and frontline staff. *By Aug 13*
-- Create and present findings to regional managers and frontline staff. *TBD*
+- Create and present findings to regional managers and frontline staff. *By Aug 16*
+- Present findings to Southeast Region librarians. *Sept 24*
 ### Present internship work
 - Post first blog post on *Medium*. *By Jul 12*
 - Post second blog post on *Medium*. *By Aug 9*
@@ -74,8 +75,9 @@ Create a general timeline for completing each of the deliverables that you liste
 - Prepare and present at ODL Showcase event. *By Aug 16*
 
 ## Changes to the work plan
-- 06.17.19 - First draft of plan completed
+- 06.17.19 - First draft of plan completed.
 - 06.24.19 - Second draft with updates based on feedback from ODL team, David Christensen, and Jay Lyman.
+- 07.03.19 - Update small details and dates.
 
 ## Communication
 - Update the ODL GitHub repository at least weekly and more as needed, so the internship’s documentation is current and thorough. Notify David and others as needed about updated reports.
