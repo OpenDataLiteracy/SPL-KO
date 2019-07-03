@@ -1,5 +1,5 @@
 ---
-title: Daily Log
+Title: Daily Log
 Author: Karalyn Ostler
 ---
 
@@ -47,4 +47,25 @@ Author: Karalyn Ostler
 - Finish first draft of interview questions
 - Setup time to get SPL badge
 - Email SPL Regional Managers about interviews
+
+### June 28th, 2019
+- Pickup SPL badge
+- Work on interview protocol and justification doc
+- Set times for interviews
+
+## Week 3
+
+### July 1st, 2019
+- Finalize interview questions and justification
+- Interview first Regional Manager
+- Take notes about interview
+
+### July 2nd, 2019
+- Out of town
+
+### July 3rd, 2019
+- Interview with second Regional Manager
+- Take notes about interview
+- Update GitHub issues and Plan of Work
+
 
