@@ -68,4 +68,7 @@ Author: Karalyn Ostler
 - Take notes about interview
 - Update GitHub issues and Plan of Work
 
+### July 5th, 2019
+- Review interview notes
+- Create list of community factors to aid in search for open datasets
 
