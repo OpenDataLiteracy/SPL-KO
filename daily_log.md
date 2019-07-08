@@ -72,3 +72,8 @@ Author: Karalyn Ostler
 - Review interview notes
 - Create list of community factors to aid in search for open datasets
 
+## Week 4
+
+### July 8th, 2019
+- **Meeting:** Check-in with Nic
+- Look for census data
