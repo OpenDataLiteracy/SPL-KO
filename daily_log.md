@@ -77,3 +77,8 @@ Author: Karalyn Ostler
 ### July 8th, 2019
 - **Meeting:** Check-in with Nic
 - Look for census data
+
+### July 9th, 2019
+- Search for datasets
+- Start creating use cases
+
