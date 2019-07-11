@@ -82,3 +82,11 @@ Author: Karalyn Ostler
 - Search for datasets
 - Start creating use cases
 
+### July 10th, 2019
+- Look at Census Bureau datasets with American FactFinder
+- Make list of useful datasets
+
+### July 11th, 2019
+- Research census blocks versus census tracts
+- Work on use cases
+- Research Census Bureau
