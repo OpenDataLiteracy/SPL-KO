@@ -11,8 +11,10 @@ As a Regional Manager, I want to know the age break down of the population surro
 As a Regional Manager, I want to know the ratio of kids going to public schools versus private schools in my region so that I can determine where I should be focusing my outreach services to best reach children who might lack additional education services.
 
 
-As a Regional Manager, I want to know which parts of the community in my region have the lowest median income levels so that I can find places in the community that need career 
+As a Regional Manager, I want to know which parts of the community in my region have the lowest median income levels so that I can find places in the community that need career resources.
 
+
+As a Branch Librarian, I want to know more information about my community so that I can better plan my services, like finding which parts of my community need certain resources and then providing outreach services for them.
 
 as a user or stakeholder I want to know some feature and then this answers this
 
