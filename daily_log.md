@@ -90,3 +90,14 @@ Author: Karalyn Ostler
 - Research census blocks versus census tracts
 - Work on use cases
 - Research Census Bureau
+
+### July 12th, 2019
+- Start working on first blog post
+- Finalize data characteristics for census data download
+
+## Week 5
+
+### July 15th
+- Download census data
+- Download SPL internal data
+- Work on blog post
