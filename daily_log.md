@@ -101,3 +101,7 @@ Author: Karalyn Ostler
 - Download census data
 - Download SPL internal data
 - Work on blog post
+
+### July 16th, 2019
+- Work on blog post
+- preliminary look at SPL data
