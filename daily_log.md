@@ -98,10 +98,20 @@ Author: Karalyn Ostler
 ## Week 5
 
 ### July 15th
+- **Meeting:** Check-in with Nic
 - Download census data
 - Download SPL internal data
 - Work on blog post
 
 ### July 16th, 2019
 - Work on blog post
-- preliminary look at SPL data
+- Preliminary look at SPL data
+
+### July 17th, 2019
+- Work on blog post
+- Look through downloaded census age data and load it into R
+
+### July 18th, 2019
+- Work on blog post
+- Clean up GitHub issues
+- Finalize data to be used for project
