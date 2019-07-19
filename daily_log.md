@@ -115,3 +115,10 @@ Author: Karalyn Ostler
 - Work on blog post
 - Clean up GitHub issues
 - Finalize data to be used for project
+
+### July 19th, 2019
+- **Meeting:** Check-in with Bree
+- Research R map functions
+- Work on blog post
+
+## Week 6
