@@ -122,3 +122,7 @@ Author: Karalyn Ostler
 - Work on blog post
 
 ## Week 6
+
+### July 22, 2019
+- Work on blog post
+- Explore R mapping tools for census data
