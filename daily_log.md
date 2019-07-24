@@ -126,3 +126,11 @@ Author: Karalyn Ostler
 ### July 22, 2019
 - Work on blog post
 - Explore R mapping tools for census data
+
+### July 23, 2019
+- Finish first blog post
+- Work on getting census data into R for creating maps
+
+### July 24, 2019
+- First blog post published
+- Work on getting census data into R for creating maps
