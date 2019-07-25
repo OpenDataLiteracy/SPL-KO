@@ -134,3 +134,7 @@ Author: Karalyn Ostler
 ### July 24, 2019
 - First blog post published
 - Work on getting census data into R for creating maps
+
+### July 25th, 2019
+- Research interactive R maps
+- Experiment with census data and maps
