@@ -138,3 +138,13 @@ Author: Karalyn Ostler
 ### July 25th, 2019
 - Research interactive R maps
 - Experiment with census data and maps
+
+### July 26th, 2019
+- Create interactive map with census data
+- Clean up code
+
+## Week 7
+
+### July 29, 2019
+- Color code regions for branch markers
+- Setup layers for toggling
