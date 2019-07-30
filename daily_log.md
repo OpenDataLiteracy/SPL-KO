@@ -148,3 +148,7 @@ Author: Karalyn Ostler
 ### July 29, 2019
 - Color code regions for branch markers
 - Setup layers for toggling
+
+### July 30, 2019
+- Find and import relevant census tables
+- Start putting together maps for each topic
