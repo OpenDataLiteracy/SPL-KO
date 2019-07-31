@@ -146,9 +146,14 @@ Author: Karalyn Ostler
 ## Week 7
 
 ### July 29, 2019
+- **Meeting:** Check-in with Nic
 - Color code regions for branch markers
 - Setup layers for toggling
 
 ### July 30, 2019
 - Find and import relevant census tables
 - Start putting together maps for each topic
+
+### July 31, 2019
+- Continue working on maps
+- Start analysis on SPL internal dataset
