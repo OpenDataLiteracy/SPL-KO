@@ -157,3 +157,11 @@ Author: Karalyn Ostler
 ### July 31, 2019
 - Continue working on maps
 - Start analysis on SPL internal dataset
+
+### August 1, 2019
+- Continue working on maps
+- Continue analysis on SPL internal dataset
+
+### August 2, 2019
+- Continue working on maps
+- Continue analysis on SPL internal dataset
