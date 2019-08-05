@@ -123,15 +123,15 @@ Author: Karalyn Ostler
 
 ## Week 6
 
-### July 22, 2019
+### July 22nd, 2019
 - Work on blog post
 - Explore R mapping tools for census data
 
-### July 23, 2019
+### July 23rd, 2019
 - Finish first blog post
 - Work on getting census data into R for creating maps
 
-### July 24, 2019
+### July 24th, 2019
 - First blog post published
 - Work on getting census data into R for creating maps
 
@@ -145,23 +145,30 @@ Author: Karalyn Ostler
 
 ## Week 7
 
-### July 29, 2019
+### July 29th, 2019
 - **Meeting:** Check-in with Nic
 - Color code regions for branch markers
 - Setup layers for toggling
 
-### July 30, 2019
+### July 30th, 2019
 - Find and import relevant census tables
 - Start putting together maps for each topic
 
-### July 31, 2019
+### July 31st, 2019
 - Continue working on maps
 - Start analysis on SPL internal dataset
 
-### August 1, 2019
+### August 1st, 2019
 - Continue working on maps
 - Continue analysis on SPL internal dataset
 
-### August 2, 2019
+### August 2nd, 2019
 - Continue working on maps
 - Continue analysis on SPL internal dataset
+
+## Week 8
+
+### August 5th, 2019
+- **Meeting:** Check-in with David and Valerie
+- Finish editing popups on interactive maps
+- Start Showcase presentation
