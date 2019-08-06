@@ -172,3 +172,7 @@ Author: Karalyn Ostler
 - **Meeting:** Check-in with David and Valerie
 - Finish editing popups on interactive maps
 - Start Showcase presentation
+
+### August 6th, 2019
+- Finish interactive maps
+- Research Shiny R apps
