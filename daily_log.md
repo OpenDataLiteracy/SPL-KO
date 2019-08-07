@@ -176,3 +176,7 @@ Author: Karalyn Ostler
 ### August 6th, 2019
 - Finish interactive maps
 - Research Shiny R apps
+
+### August 7th, 2019
+- Continue analysis on SPL dataset
+- Create Shiny app with interactive maps
