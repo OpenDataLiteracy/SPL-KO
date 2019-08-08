@@ -180,3 +180,7 @@ Author: Karalyn Ostler
 ### August 7th, 2019
 - Continue analysis on SPL dataset
 - Create Shiny app with interactive maps
+
+### August 8th, 2019
+- Work on Shiny app
+- Work on presentation draft
