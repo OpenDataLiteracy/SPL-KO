@@ -184,3 +184,7 @@ Author: Karalyn Ostler
 ### August 8th, 2019
 - Work on Shiny app
 - Work on presentation draft
+
+### August 9th, 2019
+- Finish outline of showcase presentation
+- Work on stats for internal SPL dataset
