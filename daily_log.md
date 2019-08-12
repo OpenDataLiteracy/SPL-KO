@@ -188,3 +188,8 @@ Author: Karalyn Ostler
 ### August 9th, 2019
 - Finish outline of showcase presentation
 - Work on stats for internal SPL dataset
+
+## Week 9
+
+### August 12th, 2019
+- Create code gathering stats for each branch from census data
