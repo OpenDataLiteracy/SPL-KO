@@ -192,4 +192,9 @@ Author: Karalyn Ostler
 ## Week 9
 
 ### August 12th, 2019
-- Create code gathering stats for each branch from census data
+- Create code to gather stats for each branch from census data
+
+### August 13th, 2019
+- Finish getting stats from census data for areas around SPL branches
+- Finish summarizing stats for internal SPL dataset
+- Add comments to code
