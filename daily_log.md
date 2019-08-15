@@ -198,3 +198,9 @@ Author: Karalyn Ostler
 - Finish getting stats from census data for areas around SPL branches
 - Finish summarizing stats for internal SPL dataset
 - Add comments to code
+
+### August 14th, 2019
+- Finish Shiny app
+- Setup shinyapps.io account
+
+
