@@ -1,0 +1,990 @@
+---
+title: "Maps of Seattle Using Census Data"
+author: "Karalyn Ostler"
+output: html_notebook
+---
+
+# Using Census Data to Understand Communities around SPL Branches
+
+## Introduction
+
+Project Repo: https://github.com/OpenDataLiteracy/SPL-KO  
+
+This R notebook is a part of the Open Data Literacy project “Beyond Census Data: Using Open Data to Understand Communities Around Public Libraries,” which aims to transform external open data into actionable intelligence for Seattle Public Library (SPL) frontline staff. The University of Washington Information School's Open Data Literacy (ODL) project works with public institutions to create, manage and publish open data. These projects range from working with data policy to curating datasets for publication. ODL is funded by a grant from the Institute of Museum and Library Services, Laura Bush 21st Century Librarians Program. Grant number 67-5285.  
+
+Based on information collected from interviews with SPL regional managers, it became apparent that demographic and socioeconomic data would be the most useful for SPL staff in planning services and outreach. With the U.S. Census Bureau being one of the largest collections of this type of data, I chose to focus on creating visualizations, specifically maps, with Census Bureau data of the city of Seattle. I also used the R package Shiny to create an application for easy access.  
+
+
+```{r}
+#import relevant packages
+#To get census data via API
+library(tidycensus)
+#For Mapping data
+library(tidyverse)
+library(leaflet)
+library(sf)
+library(mapview)
+library(raster)
+library(htmlwidgets)
+```
+
+## Getting Data from Census API
+
+There are a few ways to get data from the U.S. Census Bureau but the best way to get the data into R with the right polygon measurements for the census tracts is through the Census API using the package tidycensus. I focused on data about age, income, language spoken at home, and school enrollment type (private versus public schools). To get the most recent available data as of July 2019, I used the 2017 American Community Survey data, which has the information I am interested in. You will need to get an API key from https://www.census.gov/developers/ to run this code. This chunk of code can easily be changed to download data from any county in the United States by changing the state and county arguments in the get_acs function.
+
+```{r, eval=FALSE}
+#Need an API key for access to Census API
+#You can get a key at: https://www.census.gov/developers/
+#Set key:
+census_api_key("Replace with your key")
+#Get American Community Survey data:
+#Table Numbers and variable names can be found at: https://api.census.gov/data/2017/acs/acs5/variables.html
+
+#Geographies smaller than tract unavailable via get_acs
+
+#Age by Sex
+wa_age <- get_acs(geography = "tract", 
+                  table = "B01001",
+                  year = 2017,
+                  state = "WA", 
+                  county = "King",
+                  geometry = TRUE) 
+#Median Age for Tract
+age_median <- get_acs(geography = "tract", 
+                  variable = "B01002_001",
+                  year = 2017,
+                  state = "WA", 
+                  county = "King",
+                  geometry = TRUE) 
+#Median Household Income 
+wa_income <- get_acs(geography = "tract", 
+                  table = "B19013",
+                  year = 2017,
+                  state = "WA", 
+                  county = "King",
+                  geometry = TRUE)
+#Age by Language Spoken at Home
+wa_language <- get_acs(geography = "tract", 
+                  table = "B16007",
+                  year = 2017,
+                  state = "WA", 
+                  county = "King",
+                  geometry = TRUE)
+#School Enrollment by Level of School by Type of School
+wa_school <- get_acs(geography = "tract", 
+                  table = "B14002",
+                  year = 2017,
+                  state = "WA", 
+                  county = "King",
+                  geometry = TRUE)
+```
+
+
+To cut down on the amount of repeated calls to the Census API as I worked on this code, I saved the data to .rds files so that the list format of the data is preserved and easily reuploaded into R.
+
+```{r, eval=FALSE}
+#save datasets from API to computer (incase application crashes, alternative to using API again)
+saveRDS(wa_age, file="census_data/wa_age.rds")
+saveRDS(age_median, file="census_data/age_median.rds")
+saveRDS(wa_income, file="census_data/wa_income.rds")
+saveRDS(wa_language, file="census_data/wa_lang.rds")
+saveRDS(wa_school, file="census_data/wa_school.rds")
+```
+
+```{r}
+#reload data
+wa_age <- readRDS("census_data/wa_age.rds")
+age_median <-readRDS("census_data/age_median.rds")
+wa_income <-readRDS("census_data/wa_income.rds")
+wa_language <-readRDS("census_data/wa_lang.rds")
+wa_school <-readRDS("census_data/wa_school.rds")
+```
+
+Since I am focusing on the areas around Seattle Public Libraries, I wanted to put a layer of SPL branches on the maps so that librarians could find their branch and see stats for the census tracts around it. The .csv file contains the names of the branches, longitude, latitude, and the region of SPL the branch lies in. The regions are internal to SPL and are most useful for regional managers. The function getColors is used to color the branch icons by region and can be ignored if your data does not have regions. In the mapping sections below, the color for the icons will need to be commented out of the addAwesomeMarkers argument if there is no region color and all markers will appear the same color. Alternatively, the getColor code could be changed to represent a different factor, either way the code will need to be changed to specify what color goes to which factor manually.
+
+
+
+```{r}
+# Add the SPL library locations data to the maps
+#branch_loglat.csv contains columns name, nameID, region, longitude, latitude
+branches <- read.csv("branch_loglat.csv")
+```
+
+
+```{r}
+#create colored icons based on regions
+#Code adapted from: https://rstudio.github.io/leaflet/markers.html
+getColor <- function(region) {
+  sapply(branches$region, function(region) {
+  if(region == "DWN") {
+    "red"
+  } else if(region == "MCE") {
+    "orange"
+  } else if(region == "MCW") {
+    "lightgray"
+  } else if(region == "NER") {
+    "darkblue"
+  } else if(region == "NWR") {
+    "lightgreen"
+  } else if(region == "SER") {
+    "pink"
+  } else if(region == "SWR") {
+    "darkpurple"
+  } else {
+    "lightred"
+  } })
+}
+
+icons <- awesomeIcons(
+  icon = 'ios-close',
+  iconColor = 'black',
+  library = 'ion',
+  markerColor = getColor(branches)
+)
+```
+
+## Age in Seattle
+
+The raw data from the Census needs to be tidied up so that the variables are easily accessible, i.e. the variables all appear in one column and need to be split into individual columns using the spread function. The data also includes more census tracts than I need for my project. The City of Seattle only includes Census tracts 1-122 of King County, so the data was cut to only include those. I also wanted to group the ages together into larger age groups so that the data would be more manageable for mapping. The data was also split between male and female, but I chose to group those categories together to include all counts for a certain age range.
+
+```{r}
+#Get only Seattle Tracts (Census tracts 1-122) for median age data
+age_median_1 <- head(age_median, 132)
+```
+
+```{r}
+#spread tables to make each variable (B01001_0XX) in dataset a column
+#need to separate the estimate and margin of error for spread to work
+#Estimate
+wa_age_est <- subset(wa_age, select=-moe)
+wa_age_est <- spread(wa_age_est, variable, estimate)
+#margin of error
+wa_age_err <- subset(wa_age, select=-estimate)
+wa_age_err <- spread(wa_age_err, variable, moe)
+```
+
+
+```{r}
+#Get only Seattle Tracts (Census tracts 1-122)
+wa_age_est <- head(wa_age_est, 132)
+#Create columns for age ranges (column descriptions can be found: https://api.census.gov/data/2017/acs/acs5/variables.html)
+wa_age_est$under18 <- wa_age_est$B01001_003+wa_age_est$B01001_004+wa_age_est$B01001_005+wa_age_est$B01001_006+wa_age_est$B01001_027+wa_age_est$B01001_028+wa_age_est$B01001_029+wa_age_est$B01001_030
+wa_age_est$y1839 <- wa_age_est$B01001_007+wa_age_est$B01001_008+wa_age_est$B01001_009+wa_age_est$B01001_010+wa_age_est$B01001_011+wa_age_est$B01001_012+wa_age_est$B01001_013+wa_age_est$B01001_031+wa_age_est$B01001_032+wa_age_est$B01001_033+wa_age_est$B01001_034+wa_age_est$B01001_035+wa_age_est$B01001_036+wa_age_est$B01001_037
+wa_age_est$y4063 <- wa_age_est$B01001_014+wa_age_est$B01001_015+wa_age_est$B01001_016+wa_age_est$B01001_017+wa_age_est$B01001_018+wa_age_est$B01001_019+wa_age_est$B01001_038+wa_age_est$B01001_039+wa_age_est$B01001_040+wa_age_est$B01001_041+wa_age_est$B01001_042+wa_age_est$B01001_043
+wa_age_est$over65 <- wa_age_est$B01001_020+wa_age_est$B01001_021+wa_age_est$B01001_022+wa_age_est$B01001_023+wa_age_est$B01001_024+wa_age_est$B01001_025+wa_age_est$B01001_044+wa_age_est$B01001_045+wa_age_est$B01001_046+wa_age_est$B01001_047+wa_age_est$B01001_048+wa_age_est$B01001_049
+```
+
+
+I chose to use percentages instead of counts for this project because the data are estimates from the surveys and not actual raw data. I assumed that percentages would be more helpful for library staff, especially since the counts are so approximate.
+
+
+```{r}
+#Create percentages for each tract from total pop count column (B01001_001)
+wa_age_est$under18_per <- (wa_age_est$under18/wa_age_est$B01001_001)*100
+wa_age_est$y1839_per <- (wa_age_est$y1839/wa_age_est$B01001_001)*100
+wa_age_est$y4063_per <- (wa_age_est$y4063/wa_age_est$B01001_001)*100
+wa_age_est$over65_per <- (wa_age_est$over65/wa_age_est$B01001_001)*100
+```
+
+
+### Age Stats (Census Data) for Each Branch
+
+To find stats for each branch, I needed to create code that would check each census tract and see if it was close to a branch. I did this by using the min and max bounds of each polygon shape as provided in the data and checking to see if a square with those bounds would fall within about 1 mile from the branch. 0.0167 degrees is roughly a nautical mile in longitude and latitude, which was the easiest way to express a mile without having to use polar coordinates or anything more complicated. To find the stats for the census tracts nearest the branches I used a 0.0334 degree by 0.0334 degree square around the branch. I then tested each corner of the census tract square mentioned above to see if it fell within the range of points in the branch square. Any census tract within this range was used in the average calculation for this branch. Though this method is pretty rough, it allows a more automated system for finding which tracts are near the branches instead of going through and choosing each group individually. A future approach might be some type of clustering method with machine learning for a bigger area.  
+
+```{r}
+#Test if Census Tract Min and max bounds fall within 1 mile range of branch
+for (x in {1:27}) {
+  # Make temporary variables for each age range to later add to branches table (will reset for each branch)
+  t <- 0
+  t_med <- 0
+  br_avgmed <- 0
+  br_under18 <- 0
+  br_1839 <- 0
+  br_4064 <- 0
+  br_over65 <- 0
+  for (y  in {1:132}) {
+    #For each census tacts, min and max longitude and latitudes, check if they fall within the area around the branch. Check each corner of polygon individually and if it does fall in range, add it to the value for branch.
+    #Polygon min lat, min long corner
+    if ((st_bbox(wa_age_est$geometry[y])[2] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_age_est$geometry[y])[2] < (branches$latitude[x]+0.0167)) & (st_bbox(wa_age_est$geometry[y])[1] > (branches$longitude[x]-0.0167) & st_bbox(wa_age_est$geometry[y])[1] < (branches$longitude[x]+0.0167))) {
+      #If it does fall within the area, add values to the temp variables made above
+      t <- t+ wa_age_est$under18[y] + wa_age_est$y1839[y] + wa_age_est$y4063[y] + wa_age_est$over65[y]
+      t_med <- t_med +1
+      br_avgmed <- br_avgmed + age_median_1$estimate[y]
+      br_under18 <- br_under18+wa_age_est$under18[y]
+      br_1839 <- br_1839 + wa_age_est$y1839[y]
+      br_4064 <- br_4064 + wa_age_est$y4063[y]
+      br_over65 <- br_over65 + wa_age_est$over65[y]
+    } #Min lat, Max Long
+      else if (((st_bbox(wa_age_est$geometry[y])[2] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_age_est$geometry[y])[2] < (branches$latitude[x]+0.0167))) & (st_bbox(wa_age_est$geometry[y])[3] > (branches$longitude[x]-0.0167) & st_bbox(wa_age_est$geometry[y])[3] < (branches$longitude[x]+0.0167))) {
+      t <- t+ wa_age_est$under18[y] + wa_age_est$y1839[y] + wa_age_est$y4063[y] + wa_age_est$over65[y]
+      t_med <- t_med +1
+      br_avgmed <- br_avgmed + age_median_1$estimate[y]
+      br_under18 <- br_under18+wa_age_est$under18[y]
+      br_1839 <- br_1839 + wa_age_est$y1839[y]
+      br_4064 <- br_4064 + wa_age_est$y4063[y]
+      br_over65 <- br_over65 + wa_age_est$over65[y]
+    } #Max lat, Min Long
+      else if ((st_bbox(wa_age_est$geometry[y])[4] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_age_est$geometry[y])[4] < (branches$latitude[x]+0.0167)) & (st_bbox(wa_age_est$geometry[y])[1] > (branches$longitude[x]-0.0167) & st_bbox(wa_age_est$geometry[y])[1] < (branches$longitude[x]+0.0167))) {
+      t <- t+ wa_age_est$under18[y] + wa_age_est$y1839[y] + wa_age_est$y4063[y] + wa_age_est$over65[y]
+      t_med <- t_med +1
+      br_avgmed <- br_avgmed + age_median_1$estimate[y]
+      br_under18 <- br_under18+wa_age_est$under18[y]
+      br_1839 <- br_1839 + wa_age_est$y1839[y]
+      br_4064 <- br_4064 + wa_age_est$y4063[y]
+      br_over65 <- br_over65 + wa_age_est$over65[y]
+    } #Max lat, Max long
+      else if ((st_bbox(wa_age_est$geometry[y])[4] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_age_est$geometry[y])[4] < (branches$latitude[x]+0.0167)) & (st_bbox(wa_age_est$geometry[y])[3] > (branches$longitude[x]-0.0167) & st_bbox(wa_age_est$geometry[y])[3] < (branches$longitude[x]+0.0167))) {
+      t <- t+ wa_age_est$under18[y] + wa_age_est$y1839[y] + wa_age_est$y4063[y] + wa_age_est$over65[y]
+      t_med <- t_med +1
+      br_avgmed <- br_avgmed + age_median_1$estimate[y]
+      br_under18 <- br_under18+wa_age_est$under18[y]
+      br_1839 <- br_1839 + wa_age_est$y1839[y]
+      br_4064 <- br_4064 + wa_age_est$y4063[y]
+      br_over65 <- br_over65 + wa_age_est$over65[y]
+    } else {
+      t <- t+0
+    }
+  }
+  #For the branch, save the temp variables in the branch table as entry
+  branches$age_median_avg[x] <- (br_avgmed/t_med)
+  branches$age_under18[x] <- br_under18
+  branches$age_1839[x] <- br_1839
+  branches$age_4064[x] <- br_4064
+  branches$age_over65[x] <- br_over65
+  branches$age_total[x] <- t
+}
+
+```
+
+
+### Mapping Age
+
+To create interactive maps that can easily be used by anyone, framiliar with R or not, I decided to use the R Leaflet package. This allowed me to create interactive maps of Seattle with the census tracts colored by a value and popups with more stats for each census tract and branch. When creating maps, popups are assigned a layer group and will change based on the selected layer. The color of the census tracts will toggle between different age ranges and the median age layer via radio buttons. For the age maps, the legends for the base layers cannot toggle between the groups because they are both in base layers but this issue can be remedied in a Shiny app later on.
+
+```{r}
+#AGE
+#Adapted from: https://juliasilge.com/blog/using-tidycensus/
+
+#Create color palette for census data legends
+#For the Median age (years)
+pal <- colorNumeric(palette = "viridis", domain = age_median_1$estimate)
+#For the other age data (percentages)
+pal6 <- colorNumeric(palette = "viridis", domain = c(0,100), n = 10)
+
+#Create intereactive map
+leaflet() %>% 
+  #Base Map
+  addProviderTiles("CartoDB.Positron") %>% 
+  #Center view on the City of Seattle
+  setView(lat = 47.6062, lng = -122.3321, zoom = 11) %>%
+  #Add the median age colored polygon layer (name layer with group attribute)
+  addPolygons(data=age_median_1, popup = paste("<i> Tract ", str_extract(age_median_1$NAME, "[0-9]+"),"</i> <br>",
+                                               "<b>Median Age:</b>","<br>",
+                            as.character(age_median_1$estimate), "yrs", "\u00B1", as.character(age_median_1$moe), "yrs", "<br>",
+                            "<b>Age Breakdown:</b> <br>",
+                            "Under 18: ", round(wa_age_est$under18_per,digits = 2) , "% <br>",
+                            "18-39: ", round(wa_age_est$y1839_per,digits = 2), "% <br>",
+                            "40-64: ", round(wa_age_est$y4063_per,digits = 2), "% <br>",
+                            "Over 65: ", round(wa_age_est$over65_per,digits = 2), "%"),
+                #Define borders around polygons
+                stroke = TRUE,
+                weight = 1,
+                #Keep accurate polygon shapes when zooming
+                smoothFactor = 0,
+                #define colors
+                fillOpacity = 0.7,
+                color = ~ pal(estimate), group = "Median Age") %>%
+  #add layer for under 18
+  addPolygons(data=wa_age_est, popup = paste("<i> Tract ", str_extract(age_median_1$NAME, "[0-9]+"),"</i> <br>",
+                                               "<b>Median Age:</b>","<br>",
+                            as.character(age_median_1$estimate), "yrs", "\u00B1", as.character(age_median_1$moe), "yrs", "<br>",
+                            "<b>Age Breakdown:</b> <br>",
+                            "<mark> Under 18: </mark>", round(wa_age_est$under18_per,digits = 2) , "% <br>",
+                            "18-39: ", round(wa_age_est$y1839_per,digits = 2), "% <br>",
+                            "40-64: ", round(wa_age_est$y4063_per,digits = 2), "% <br>",
+                            "Over 65: ", round(wa_age_est$over65_per,digits = 2), "%"),
+                stroke = TRUE,
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.6,
+                color = ~ pal6(under18_per), group = "under 18") %>%
+  #add layer for 18-39 year
+  addPolygons(data=wa_age_est, popup = paste("<i> Tract ", str_extract(age_median_1$NAME, "[0-9]+"),"</i> <br>",
+                                               "<b>Median Age:</b>","<br>",
+                            as.character(age_median_1$estimate), "yrs", "\u00B1", as.character(age_median_1$moe), "yrs", "<br>",
+                            "<b>Age Breakdown:</b> <br>",
+                            "Under 18: ", round(wa_age_est$under18_per,digits = 2) , "% <br>",
+                            "<mark> 18-39: </mark>", round(wa_age_est$y1839_per,digits = 2), "% <br>",
+                            "40-64: ", round(wa_age_est$y4063_per,digits = 2), "% <br>",
+                            "Over 65: ", round(wa_age_est$over65_per,digits = 2), "%"),
+                stroke = TRUE,
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.6,
+                color = ~ pal6(y1839_per), group = "18-39") %>%
+  #add layer for 40-64 years
+    addPolygons(data=wa_age_est, popup = paste("<i> Tract ", str_extract(age_median_1$NAME, "[0-9]+"),"</i> <br>",
+                                               "<b>Median Age:</b>","<br>",
+                            as.character(age_median_1$estimate), "yrs", "\u00B1", as.character(age_median_1$moe), "yrs", "<br>",
+                            "<b>Age Breakdown:</b> <br>",
+                            "Under 18: ", round(wa_age_est$under18_per,digits = 2) , "% <br>",
+                            "18-39: ", round(wa_age_est$y1839_per,digits = 2), "% <br>",
+                            "<mark> 40-64: </mark>", round(wa_age_est$y4063_per,digits = 2), "% <br>",
+                            "Over 65: ", round(wa_age_est$over65_per,digits = 2), "%"),
+                stroke = TRUE,
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.6,
+                color = ~ pal6(y4063_per), group = "40-64") %>%
+  #add layer for over 65 years
+    addPolygons(data=wa_age_est, popup = paste("<i> Tract ", str_extract(age_median_1$NAME, "[0-9]+"),"</i> <br>",
+                                               "<b>Median Age:</b>","<br>",
+                            as.character(age_median_1$estimate), "yrs", "\u00B1", as.character(age_median_1$moe), "yrs", "<br>",
+                            "<b>Age Breakdown:</b> <br>",
+                            "Under 18: ", round(wa_age_est$under18_per,digits = 2) , "% <br>",
+                            "18-39: ", round(wa_age_est$y1839_per,digits = 2), "% <br>",
+                            "40-64: ", round(wa_age_est$y4063_per,digits = 2), "% <br>",
+                            "<mark> Over 65: </mark>", round(wa_age_est$over65_per,digits = 2), "%"),
+                stroke = TRUE,
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.6,
+                color = ~ pal6(over65_per), group = "65 and over") %>%
+  #add legend for median age layer
+  addLegend("bottomleft", 
+              pal = pal, 
+              values = age_median_1$estimate,
+              title = "Ages",
+              opacity = 1) %>% 
+  #add layer for other age layers
+  addLegend("bottomleft", 
+              pal = pal6, 
+              values = c(0,100),
+              title = "Percentage of people",
+              opacity = 1) %>% 
+  #Add layer of SPL branch location icons
+  addAwesomeMarkers(branches$longitude, branches$latitude, 
+                    icon=icons, popup= paste("<i>", branches$name, "</i> <br>",
+                                             "FOR TRACTS WITHIN <br> 1 MILE OF BRANCH: <br>",
+                                             "<b>Average Median Age:</b>","<br>",
+                            round(branches$age_median_avg, digits = 2), "yrs <br>",
+                            "<b>Age Breakdown:</b> <br>",
+                            "Under 18: ", round((branches$age_under18/branches$age_total)*100,digits = 2) , "% <br>",
+                            "18-39: ", round((branches$age_1839/branches$age_total)*100,digits = 2), "% <br>",
+                            "40-64: ", round((branches$age_4064/branches$age_total)*100,digits = 2), "% <br>",
+                            "Over 65: ", round((branches$age_over65/branches$age_total)*100,digits = 2), "%"), group = "SPL Branches") %>% 
+  # Layers controls (define layer groups)
+  addLayersControl(
+    #Base layers have radio dials and legend will be static
+    baseGroups = c("Median Age", "under 18", "18-39", "40-64", "65 and over"),
+    #Over layers have check boxes and legends will toggle with layer
+    overlayGroups = c("SPL Branches"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>% 
+  #Add home buttons to zoom to each region (coordinates define view bounds)
+  #default is lower right corner
+  addHomeButton(ext = extent(c(-122.40,-122.30, 47.50, 47.60)), layer.name = "SWR") %>% 
+  addHomeButton(ext = extent(c(-122.34,-122.25, 47.51, 47.61)), layer.name = "SER")  %>%
+  addHomeButton(ext = extent(c(-122.37,-122.32, 47.63, 47.73)), layer.name = "NWR") %>% 
+  addHomeButton(ext = extent(c(-122.34,-122.29, 47.65, 47.74)), layer.name = "NER") %>%
+  addHomeButton(ext = extent(c(-122.42,-122.33, 47.63, 47.68)), layer.name = "MCW") %>%
+  addHomeButton(ext = extent(c(-122.33,-122.27, 47.60, 47.66)), layer.name = "MCE") %>%
+  addHomeButton(ext = extent(c(-122.36,-122.31, 47.59, 47.62)), layer.name = "DWN") #%>%
+  #can save map as .html file, shiny app is a better option
+  #saveWidget(file="seattle_age.html")
+```
+
+
+## Income in Seattle
+
+Minimal work needs to be done on the income data because it only has one variable. The variable is an estimated median income of the census tract and I decided to use these actual values since they were not split by age range or any other groups. I did need to truncate the census tracts in Seattle like the other datasets though since all of king county was included.
+
+```{r}
+#Get only Seattle Tracts (Census tracts 1-122)
+wa_income <- head(wa_income, 132)
+```
+
+###  Income Stats (Census Data) for Each Branch
+
+I followed the same procedure for finding the census tracts that are within about 1 mile of the branches. In this case I averaged the median incomes of the surrounding census tracts instead of the counts of individuals.  
+
+```{r}
+#Test if Census Tract Min and max bounds fall within 1 mile range of branch
+for (x in {1:27}) {
+  # Make temporary variables for each age range to later add to branches table (will reset for each branch)
+  t <- 0
+  temp_income <- 0
+  for (y  in {1:132}) {
+    #For each census tacts, min and max longitude and latitudes, check if they fall within the area around the branch. Check each corner of polygon individually and if it does fall in range, add it to the value for branch.
+    #Polygon min lat, min long corner
+    if ((st_bbox(wa_income$geometry[y])[2] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_income$geometry[y])[2] < (branches$latitude[x]+0.0167)) & (st_bbox(wa_income$geometry[y])[1] > (branches$longitude[x]-0.0167) & st_bbox(wa_income$geometry[y])[1] < (branches$longitude[x]+0.0167))) {
+      #If it does fall within the area, add values to the temp variables made above
+      t <- t + 1
+      temp_income <- temp_income + wa_income$estimate[y]
+    } #Min lat, Max Long
+      else if (((st_bbox(wa_income$geometry[y])[2] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_income$geometry[y])[2] < (branches$latitude[x]+0.0167))) & (st_bbox(wa_income$geometry[y])[3] > (branches$longitude[x]-0.0167) & st_bbox(wa_income$geometry[y])[3] < (branches$longitude[x]+0.0167))) {
+      t <- t + 1
+      temp_income <- temp_income + wa_income$estimate[y]
+    } #Max lat, Min Long
+      else if ((st_bbox(wa_income$geometry[y])[4] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_income$geometry[y])[4] < (branches$latitude[x]+0.0167)) & (st_bbox(wa_income$geometry[y])[1] > (branches$longitude[x]-0.0167) & st_bbox(wa_income$geometry[y])[1] < (branches$longitude[x]+0.0167))) {
+      t <- t + 1
+      temp_income <- temp_income + wa_income$estimate[y]
+    } #Max lat, Max long
+      else if ((st_bbox(wa_income$geometry[y])[4] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_income$geometry[y])[4] < (branches$latitude[x]+0.0167)) & (st_bbox(wa_income$geometry[y])[3] > (branches$longitude[x]-0.0167) & st_bbox(wa_income$geometry[y])[3] < (branches$longitude[x]+0.0167))) {
+      t <- t + 1
+      temp_income <- temp_income + wa_income$estimate[y]
+    } else {
+      t <- t+0
+    }
+  }
+  #For the branch, save the temp variables in the branch table as entry
+  branches$income_avg[x] <- (temp_income/t)
+}
+```
+
+### Mapping Income
+
+I followed the same procedure for mapping the incomes of the census tracts and used popups to list their statistics and the statistics for the branches found above. This map only has one layer because there were no groups to split the data into.
+
+```{r}
+#INCOME
+#Adapted from: https://juliasilge.com/blog/using-tidycensus/
+
+#Create color palette for census data legend
+pal_income <- colorNumeric(palette = "viridis", domain = wa_income$estimate, n = 10)
+
+#Create intereactive map
+leaflet() %>% 
+  #Base Map
+  addProviderTiles("CartoDB.Positron") %>%
+  #Center view on the City of Seattle
+  setView(lat = 47.6062, lng = -122.3321, zoom = 11) %>%
+  #Add income colored polygon layer (name layer with group attribute)
+  addPolygons(data=wa_income, popup = paste("<i> Tract ", str_extract(wa_income$NAME, "[0-9]+"),"</i> <br>",
+                                            "<b>Median Household Income: </b>","<br>",
+                            "$",format(wa_income$estimate,big.mark=",",scientific=FALSE), "+/- ", "$",format(wa_income$moe,big.mark=",",scientific=FALSE)),
+                stroke = TRUE,
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.7,
+                color = ~ pal_income(estimate), group = "Median Household Income") %>%
+  addLegend("bottomleft", 
+              pal = pal_income, 
+              values = wa_income$estimate,
+              title = "Median Household Income",
+              opacity = 1, group='Median Household Income') %>% 
+  #Add layer of SPL branch location icons
+  addAwesomeMarkers(branches$longitude, branches$latitude, 
+                    icon=icons, popup=paste("<i>", branches$name, "</i> <br>",
+                                             "FOR TRACTS WITHIN <br> 1 MILE OF BRANCH: <br>",
+                                             "<b>Average Median Household Income: </b>","<br>",
+                            "$",format(branches$income_avg,big.mark=",",scientific=FALSE)), group = "SPL Branches") %>% 
+  # Layers control
+  addLayersControl(
+    baseGroups = c("Median Household Income"),
+    overlayGroups = c("SPL Branches"),
+    options = layersControlOptions(collapsed = FALSE)) %>% 
+  addHomeButton(ext = extent(c(-122.40,-122.30, 47.50, 47.60)), layer.name = "SWR") %>% 
+  addHomeButton(ext = extent(c(-122.34,-122.25, 47.51, 47.61)), layer.name = "SER")  %>%
+  addHomeButton(ext = extent(c(-122.37,-122.32, 47.63, 47.73)), layer.name = "NWR") %>% 
+  addHomeButton(ext = extent(c(-122.34,-122.29, 47.65, 47.74)), layer.name = "NER") %>%
+  addHomeButton(ext = extent(c(-122.42,-122.33, 47.63, 47.68)), layer.name = "MCW") %>%
+  addHomeButton(ext = extent(c(-122.33,-122.27, 47.60, 47.66)), layer.name = "MCE") %>%
+  addHomeButton(ext = extent(c(-122.36,-122.31, 47.59, 47.62)), layer.name = "DWN") 
+```
+
+## Language Spoken at Home
+
+The language spoken at home dataset is split between five different language categories, speaks only english at home, speaks spanish, speaks other indo-european languages, speaks asian and pacific island languages, speaks other languages. I grouped all ages and sexes together for each language category. I followed a similar procedure as done to the age data.
+
+```{r}
+#spread tables to make each variable (B16007_0XX) in dataset a column
+#need to separate the estimate and margin of error for spread to work
+#Estimate
+wa_lang_est <- subset(wa_language, select=-moe)
+wa_lang_est <- spread(wa_lang_est, variable, estimate)
+#margin of error
+wa_lang_err <- subset(wa_language, select=-estimate)
+wa_lang_err <- spread(wa_lang_err, variable, moe)
+#Shorten to only Seattle tracts
+wa_lang_est <- head(wa_lang_est, 132)
+
+```
+
+
+```{r}
+#Create columns for each language type (English, Spanish, Indo-European, Asian and Pacific Island, and other)
+#(column descriptions can be found: https://api.census.gov/data/2017/acs/acs5/variables.html)
+wa_lang_est$eng <- wa_lang_est$B16007_003+wa_lang_est$B16007_009+wa_lang_est$B16007_015
+wa_lang_est$span <- wa_lang_est$B16007_004+wa_lang_est$B16007_010+wa_lang_est$B16007_016
+wa_lang_est$indo <- wa_lang_est$B16007_005+wa_lang_est$B16007_011+wa_lang_est$B16007_017
+wa_lang_est$asian <- wa_lang_est$B16007_006+wa_lang_est$B16007_012+wa_lang_est$B16007_018
+wa_lang_est$other <- wa_lang_est$B16007_007+wa_lang_est$B16007_013+wa_lang_est$B16007_019
+```
+
+```{r}
+#Create percentages for each tract from total pop count column (wa_lang_est$B16007_001)
+wa_lang_est$eng_per <- (wa_lang_est$eng/wa_lang_est$B16007_001)*100
+wa_lang_est$span_per <- (wa_lang_est$span/wa_lang_est$B16007_001)*100
+wa_lang_est$indo_per <- (wa_lang_est$indo/wa_lang_est$B16007_001)*100
+wa_lang_est$asian_per <- (wa_lang_est$asian/wa_lang_est$B16007_001)*100
+wa_lang_est$other_per <- (wa_lang_est$other/wa_lang_est$B16007_001)*100
+```
+
+
+
+##  Language Stats (Census Data) for Each Branch
+
+I followed the same procedure for finding the census tracts that are within about 1 mile of the branches as the age and income data. In this case I averaged the counts of the surrounding census tracts and then found the percentage of the total (within 1 mile) surrounding population.  
+
+```{r}
+#Test if Census Tract Min and max bounds fall within 1 mile range of branch
+for (x in {1:27}) {
+  # Make temporary variables for each age range to later add to branches table (will reset for each branch)
+  t <- 0
+  br_eng <- 0
+  br_span <- 0
+  br_indo <- 0
+  br_asian <- 0
+  br_other <- 0
+  for (y  in {1:132}) {
+    #For each census tacts, min and max longitude and latitudes, check if they fall within the area around the branch. Check each corner of polygon individually and if it does fall in range, add it to the value for branch.
+    #Polygon min lat, min long corner
+    if ((st_bbox(wa_lang_est$geometry[y])[2] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_lang_est$geometry[y])[2] < (branches$latitude[x]+0.0167)) & (st_bbox(wa_lang_est$geometry[y])[1] > (branches$longitude[x]-0.0167) & st_bbox(wa_lang_est$geometry[y])[1] < (branches$longitude[x]+0.0167))) {
+      #If it does fall within the area, add values to the temp variables made above
+      t <- t+ wa_lang_est$eng[y] + wa_lang_est$span[y] + wa_lang_est$indo[y] + wa_lang_est$asian[y] + wa_lang_est$other[y]
+      br_eng <- br_eng +wa_lang_est$eng[y]
+      br_span <- br_span + wa_lang_est$span[y]
+      br_indo <- br_indo + wa_lang_est$indo[y]
+      br_asian <- br_asian + wa_lang_est$asian[y]
+      br_other <- br_other + wa_lang_est$other[y]
+    } #Min lat, Max Long
+      else if (((st_bbox(wa_lang_est$geometry[y])[2] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_lang_est$geometry[y])[2] < (branches$latitude[x]+0.0167))) & (st_bbox(wa_lang_est$geometry[y])[3] > (branches$longitude[x]-0.0167) & st_bbox(wa_lang_est$geometry[y])[3] < (branches$longitude[x]+0.0167))) {
+      t <- t+ wa_lang_est$eng[y] + wa_lang_est$span[y] + wa_lang_est$indo[y] + wa_lang_est$asian[y] + wa_lang_est$other[y]
+      br_eng <- br_eng +wa_lang_est$eng[y]
+      br_span <- br_span + wa_lang_est$span[y]
+      br_indo <- br_indo + wa_lang_est$indo[y]
+      br_asian <- br_asian + wa_lang_est$asian[y]
+      br_other <- br_other + wa_lang_est$other[y]
+    } #Max lat, Min Long
+      else if ((st_bbox(wa_lang_est$geometry[y])[4] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_lang_est$geometry[y])[4] < (branches$latitude[x]+0.0167)) & (st_bbox(wa_lang_est$geometry[y])[1] > (branches$longitude[x]-0.0167) & st_bbox(wa_lang_est$geometry[y])[1] < (branches$longitude[x]+0.0167))) {
+      t <- t+ wa_lang_est$eng[y] + wa_lang_est$span[y] + wa_lang_est$indo[y] + wa_lang_est$asian[y] + wa_lang_est$other[y]
+      br_eng <- br_eng +wa_lang_est$eng[y]
+      br_span <- br_span + wa_lang_est$span[y]
+      br_indo <- br_indo + wa_lang_est$indo[y]
+      br_asian <- br_asian + wa_lang_est$asian[y]
+      br_other <- br_other + wa_lang_est$other[y]
+    } #Max lat, Max long
+      else if ((st_bbox(wa_lang_est$geometry[y])[4] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_lang_est$geometry[y])[4] < (branches$latitude[x]+0.0167)) & (st_bbox(wa_lang_est$geometry[y])[3] > (branches$longitude[x]-0.0167) & st_bbox(wa_lang_est$geometry[y])[3] < (branches$longitude[x]+0.0167))) {
+      t <- t+ wa_lang_est$eng[y] + wa_lang_est$span[y] + wa_lang_est$indo[y] + wa_lang_est$asian[y] + wa_lang_est$other[y]
+      br_eng <- br_eng +wa_lang_est$eng[y]
+      br_span <- br_span + wa_lang_est$span[y]
+      br_indo <- br_indo + wa_lang_est$indo[y]
+      br_asian <- br_asian + wa_lang_est$asian[y]
+      br_other <- br_other + wa_lang_est$other[y]
+    } else {
+      t <- t+0
+    }
+  }
+  #For the branch, save the temp variables in the branch table as entry
+  branches$lang_eng[x] <- br_eng
+  branches$lang_span[x] <- br_span
+  branches$lang_indo[x] <- br_indo
+  branches$lang_asian[x] <- br_asian
+  branches$lang_other[x] <- br_other
+  branches$lang_total[x] <- t
+}
+```
+
+### Mapping Language
+
+This language map is also very similar to the age map above. The map layers are split between the language type spoken instead of the age ranges. I used the pre-exsisting language categories used by the Census Bureau.  
+
+```{r}
+#LANGUAGE
+#Adapted from: https://juliasilge.com/blog/using-tidycensus/
+
+#Create color palette for census data legend
+pal_lang <- colorNumeric(palette = "viridis", domain = c(0,100), n = 10)
+
+#Create intereactive map
+leaflet() %>% 
+    #Base Map
+  addProviderTiles("CartoDB.Positron") %>%
+  #Center view on the City of Seattle
+  setView(lat = 47.6062, lng = -122.3321, zoom = 11) %>%
+  #Add the english language colored polygon layer (name layer with group attribute)
+  addPolygons(data=wa_lang_est, popup = paste("<i> Tract ", str_extract(wa_lang_est$NAME, "[0-9]+"),"</i> <br>",
+                                              "<b>Language Breakdown:</b> <br>",
+                                              "<mark>Only English: </mark>", round(wa_lang_est$eng_per,digits = 2),"% <br>",
+                                              "Spanish: ", round(wa_lang_est$span_per,digits = 2), "% <br>",
+                                              "Other Indo-European: ", round(wa_lang_est$indo_per,digits = 2), "% <br>",
+                                              "Asian and Pacific Island: ", round(wa_lang_est$asian_per,digits = 2), "% <br>",
+                                              "Other Languages: ", round(wa_lang_est$other_per,digits = 2), "%"),
+                stroke = TRUE,
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.7,
+                color = ~ pal_lang(eng_per), group = "Only English") %>%
+  #Add layer for spanish
+    addPolygons(data=wa_lang_est, popup = paste("<i> Tract ", str_extract(wa_lang_est$NAME, "[0-9]+"),"</i> <br>",
+                                              "<b>Language Breakdown:</b> <br>",
+                                              "Only English: ", round(wa_lang_est$eng_per,digits = 2),"% <br>",
+                                              "<mark>Spanish: </mark>", round(wa_lang_est$span_per,digits = 2), "% <br>",
+                                              "Other Indo-European: ", round(wa_lang_est$indo_per,digits = 2), "% <br>",
+                                              "Asian and Pacific Island: ", round(wa_lang_est$asian_per,digits = 2), "% <br>",
+                                              "Other Languages: ", round(wa_lang_est$other_per,digits = 2), "%"),
+                stroke = TRUE,
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.7,
+                color = ~ pal_lang(span_per), group = "Spanish") %>%
+  #add layer for other indo-european languages
+    addPolygons(data=wa_lang_est, popup = paste("<i> Tract ", str_extract(wa_lang_est$NAME, "[0-9]+"),"</i> <br>",
+                                              "<b>Language Breakdown:</b> <br>",
+                                              "Only English: ", round(wa_lang_est$eng_per,digits = 2),"% <br>",
+                                              "Spanish: ", round(wa_lang_est$span_per,digits = 2), "% <br>",
+                                              "<mark>Other Indo-European: </mark>", round(wa_lang_est$indo_per,digits = 2), "% <br>",
+                                              "Asian and Pacific Island: ", round(wa_lang_est$asian_per,digits = 2), "% <br>",
+                                              "Other Languages: ", round(wa_lang_est$other_per,digits = 2), "%"),
+                stroke = TRUE,
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.7,
+                color = ~ pal_lang(indo_per), group = "Other Indo-European") %>%
+  #add layer for asian and pacific island languages
+    addPolygons(data=wa_lang_est, popup = paste("<i> Tract ", str_extract(wa_lang_est$NAME, "[0-9]+"),"</i> <br>",
+                                              "<b>Language Breakdown:</b> <br>",
+                                              "Only English: ", round(wa_lang_est$eng_per,digits = 2),"% <br>",
+                                              "Spanish: ", round(wa_lang_est$span_per,digits = 2), "% <br>",
+                                              "Other Indo-European: ", round(wa_lang_est$indo_per,digits = 2), "% <br>",
+                                              "<mark>Asian and Pacific Island: </mark>", round(wa_lang_est$asian_per,digits = 2), "% <br>",
+                                              "Other Languages: ", round(wa_lang_est$other_per,digits = 2), "%"),
+                stroke = TRUE,
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.7,
+                color = ~ pal_lang(asian_per), group = "Asian and Pacific Island") %>%
+  #add a layer for other languages
+    addPolygons(data=wa_lang_est, popup = paste("<i> Tract ", str_extract(wa_lang_est$NAME, "[0-9]+"),"</i> <br>",
+                                              "<b>Language Breakdown:</b> <br>",
+                                              "Only English: ", round(wa_lang_est$eng_per,digits = 2),"% <br>",
+                                              "Spanish: ", round(wa_lang_est$span_per,digits = 2), "% <br>",
+                                              "Other Indo-European: ", round(wa_lang_est$indo_per,digits = 2), "% <br>",
+                                              "Asian and Pacific Island: ", round(wa_lang_est$asian_per,digits = 2), "% <br>",
+                                              "<mark>Other Languages: </mark>", round(wa_lang_est$other_per,digits = 2), "%"),
+                stroke = TRUE,
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.7,
+                color = ~ pal_lang(other_per), group = "Other Languages") %>%
+  #add legend for all layers that is calibrated for percentages from 0-100
+  addLegend("bottomleft", 
+              pal = pal_lang, 
+              values = c(0,100),
+              title = "Percentage of Tract Population",
+              opacity = 1) %>% 
+  #Add layer of SPL branch location icons
+  addAwesomeMarkers(branches$longitude, branches$latitude, 
+                    icon=icons, popup= paste("<i>", branches$name, "</i> <br>",
+                                             "FOR TRACTS WITHIN <br> 1 MILE OF BRANCH: <br>",
+                            "<b>Language Breakdown:</b> <br>",
+                            "Only English: ", round((branches$lang_eng/branches$lang_total)*100,digits = 2) , "% <br>",
+                            "Spanish: ", round((branches$lang_span/branches$lang_total)*100,digits = 2), "% <br>",
+                            "Other Indo-European: ", round((branches$lang_indo/branches$lang_total)*100,digits = 2), "% <br>",
+                            "Asian and Pacific Island: ", round((branches$lang_asian/branches$lang_total)*100,digits = 2), "% <br>",
+                            "Other Languages: ", round((branches$lang_other/branches$lang_total)*100,digits = 2), "%"), group = "SPL Branches") %>% 
+  # Layers control
+  addLayersControl(
+    baseGroups = c("Only English", "Spanish", "Other Indo-European", "Asian and Pacific Island", "Other Languages"),
+    overlayGroups = c("SPL Branches"),
+    options = layersControlOptions(collapsed = FALSE)) %>% 
+  addHomeButton(ext = extent(c(-122.40,-122.30, 47.50, 47.60)), layer.name = "SWR") %>% 
+  addHomeButton(ext = extent(c(-122.34,-122.25, 47.51, 47.61)), layer.name = "SER")  %>%
+  addHomeButton(ext = extent(c(-122.37,-122.32, 47.63, 47.73)), layer.name = "NWR") %>% 
+  addHomeButton(ext = extent(c(-122.34,-122.29, 47.65, 47.74)), layer.name = "NER") %>%
+  addHomeButton(ext = extent(c(-122.42,-122.33, 47.63, 47.68)), layer.name = "MCW") %>%
+  addHomeButton(ext = extent(c(-122.33,-122.27, 47.60, 47.66)), layer.name = "MCE") %>%
+  addHomeButton(ext = extent(c(-122.36,-122.31, 47.59, 47.62)), layer.name = "DWN") 
+```
+
+
+
+## Private versus Public School
+
+In the interviews I conducted, there was an interest in how many students around each library are enrolled in private schooling versus public schooling. This data was divided by sex and grade levels. I grouped together all sexes and split the grade ranges into preschool, kindergarten to fouth grade, fifth grade to eighth grade, and ninth grade to twelfth grade. There was available data for college age students, but I chose not to include those because there was greater interest in preK-12 children. There was also data on children not enrolled in a school but I chose not to include that data for simplicity.  
+
+```{r}
+#spread tables to make each variable (B14002_0XX) in dataset a column
+#need to separate the estimate and margin of error for spread to work
+#Estimate
+wa_school_est <- subset(wa_school, select=-moe)
+wa_school_est <- spread(wa_school_est, variable, estimate)
+#margin of error
+wa_school_err <- subset(wa_school, select=-estimate)
+wa_school_err <- spread(wa_school_err, variable, moe)
+#Shorten to only Seattle tracts
+wa_school_est <- head(wa_school_est, 132)
+```
+
+
+```{r}
+#Combine columns to make age groups separated between private and public
+#private PreK
+wa_school_est$pri_prek <- wa_school_est$B14002_006+wa_school_est$B14002_030
+#public PreK
+wa_school_est$pub_prek <- wa_school_est$B14002_005+wa_school_est$B14002_029
+
+#private K-4
+wa_school_est$pri_k4 <- wa_school_est$B14002_009+wa_school_est$B14002_012+wa_school_est$B14002_033+ wa_school_est$B14002_036
+#public K-4
+wa_school_est$pub_k4 <- wa_school_est$B14002_008+wa_school_est$B14002_011+wa_school_est$B14002_032+wa_school_est$B14002_035
+
+#Private 5-8
+wa_school_est$pri_58 <- wa_school_est$B14002_016+wa_school_est$B14002_039
+#Public 5-8
+wa_school_est$pub_58 <-wa_school_est$B14002_014+wa_school_est$B14002_038
+
+#Private 9-12
+wa_school_est$pri_912 <- wa_school_est$B14002_018+wa_school_est$B14002_042
+#Public 9-12
+wa_school_est$pub_912 <- wa_school_est$B14002_017+wa_school_est$B14002_041
+
+```
+
+```{r}
+#Percentages of total school age possibility and the difference between the two types
+#private pre-k
+wa_school_est$pri_prek_per <- (wa_school_est$pri_prek/(wa_school_est$pri_prek+wa_school_est$pub_prek))*100
+#public pre-k
+wa_school_est$pub_prek_per <- (wa_school_est$pub_prek/(wa_school_est$pri_prek+wa_school_est$pub_prek))*100
+#difference pre-k
+wa_school_est$prek_dif <- wa_school_est$pri_prek_per-wa_school_est$pub_prek_per
+#private K-4
+wa_school_est$pri_k4_per <- (wa_school_est$pri_k4/(wa_school_est$pri_k4+wa_school_est$pub_k4))*100
+#public K-4
+wa_school_est$pub_k4_per <- (wa_school_est$pub_k4/(wa_school_est$pri_k4+wa_school_est$pub_k4))*100
+#difference k-4
+wa_school_est$k4_dif <- wa_school_est$pri_k4_per-wa_school_est$pub_k4_per
+#Private 5-8
+wa_school_est$pri_58_per <- (wa_school_est$pri_58/(wa_school_est$pri_58+wa_school_est$pub_58))*100
+#Public 5-8
+wa_school_est$pub_58_per <- (wa_school_est$pub_58/(wa_school_est$pri_58+wa_school_est$pub_58))*100
+#difference 5-8
+wa_school_est$g58_dif <- wa_school_est$pri_58_per-wa_school_est$pub_58_per
+#Private 9-12
+wa_school_est$pri_912_per <- (wa_school_est$pri_912/(wa_school_est$pri_912+wa_school_est$pub_912))*100
+#Public 9-12
+wa_school_est$pub_912_per <- (wa_school_est$pub_912/(wa_school_est$pri_912+wa_school_est$pub_912))*100
+#difference 912
+wa_school_est$g912_dif <- wa_school_est$pri_912_per-wa_school_est$pub_912_per
+```
+
+```{r}
+#Create total counts for each age group
+#total prek
+wa_school_est$prek_tot <- wa_school_est$pri_prek+wa_school_est$pub_prek
+#total K-4
+wa_school_est$k4_tot <- wa_school_est$pri_k4+wa_school_est$pub_k4
+#total 5-8
+wa_school_est$g58_tot <- wa_school_est$pri_58+wa_school_est$pub_58
+#total 9-12
+wa_school_est$g912_tot <- wa_school_est$pri_912+wa_school_est$pub_912
+```
+
+##  School Stats (Census Data) for Each Branch
+
+I followed the same procedure for finding the census tracts that are within about 1 mile of the branches as the age, income, and language data. In this case I averaged the counts of the surrounding census tracts still divided between private versus public and then found the percentage of the total (within 1 mile) surrounding population .
+
+```{r}
+#Test if Census Tract Min and max bounds fall within 1 mile range of branch
+for (x in {1:27}) {
+  # Make temporary variables for each age range to later add to branches table (will reset for each branch)
+  t <- 0
+  br_pri_prek <- 0
+  br_pub_prek <- 0
+  br_pri_k4 <- 0
+  br_pub_k4 <- 0
+  br_pri_58 <- 0
+  br_pub_58 <- 0
+  br_pri_912 <- 0
+  br_pub_912 <- 0
+  for (y  in {1:132}) {
+    #For each census tacts, min and max longitude and latitudes, check if they fall within the area around the branch. Check each corner of polygon individually and if it does fall in range, add it to the value for branch.
+    #Polygon min lat, min long corner
+    if ((st_bbox(wa_school_est$geometry[y])[2] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_school_est$geometry[y])[2] < (branches$latitude[x]+0.0167)) & (st_bbox(wa_school_est$geometry[y])[1] > (branches$longitude[x]-0.0167) & st_bbox(wa_school_est$geometry[y])[1] < (branches$longitude[x]+0.0167))) {
+      #If it does fall within the area, add values to the temp variables made above
+      t <- t + wa_school_est$pri_prek[y] + wa_school_est$pub_prek[y] + wa_school_est$pri_k4[y] + wa_school_est$pub_k4[y] + wa_school_est$pri_58[y] + wa_school_est$pub_58[y] + wa_school_est$pri_912[y] + wa_school_est$pub_912[y]
+      br_pri_prek <- br_pri_prek + wa_school_est$pri_prek[y]
+      br_pub_prek <- br_pub_prek + wa_school_est$pub_prek[y]
+      br_pri_k4 <- br_pri_k4 + wa_school_est$pri_k4[y]
+      br_pub_k4 <- br_pub_k4 + wa_school_est$pub_k4[y]
+      br_pri_58 <- br_pri_58 + wa_school_est$pri_58[y]
+      br_pub_58 <- br_pub_58 + wa_school_est$pub_58[y]
+      br_pri_912 <- br_pri_912 + wa_school_est$pri_912[y]
+      br_pub_912 <- br_pub_912 + wa_school_est$pub_912[y]
+    } #Min lat, Max Long
+      else if (((st_bbox(wa_school_est$geometry[y])[2] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_school_est$geometry[y])[2] < (branches$latitude[x]+0.0167))) & (st_bbox(wa_school_est$geometry[y])[3] > (branches$longitude[x]-0.0167) & st_bbox(wa_school_est$geometry[y])[3] < (branches$longitude[x]+0.0167))) {
+      t <- t + wa_school_est$pri_prek[y] + wa_school_est$pub_prek[y] + wa_school_est$pri_k4[y] + wa_school_est$pub_k4[y] + wa_school_est$pri_58[y] + wa_school_est$pub_58[y] + wa_school_est$pri_912[y] + wa_school_est$pub_912[y]
+      br_pri_prek <- br_pri_prek + wa_school_est$pri_prek[y]
+      br_pub_prek <- br_pub_prek + wa_school_est$pub_prek[y]
+      br_pri_k4 <- br_pri_k4 + wa_school_est$pri_k4[y]
+      br_pub_k4 <- br_pub_k4 + wa_school_est$pub_k4[y]
+      br_pri_58 <- br_pri_58 + wa_school_est$pri_58[y]
+      br_pub_58 <- br_pub_58 + wa_school_est$pub_58[y]
+      br_pri_912 <- br_pri_912 + wa_school_est$pri_912[y]
+      br_pub_912 <- br_pub_912 + wa_school_est$pub_912[y]
+    } #Max lat, Min Long
+      else if ((st_bbox(wa_school_est$geometry[y])[4] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_school_est$geometry[y])[4] < (branches$latitude[x]+0.0167)) & (st_bbox(wa_school_est$geometry[y])[1] > (branches$longitude[x]-0.0167) & st_bbox(wa_school_est$geometry[y])[1] < (branches$longitude[x]+0.0167))) {
+      t <- t + wa_school_est$pri_prek[y] + wa_school_est$pub_prek[y] + wa_school_est$pri_k4[y] + wa_school_est$pub_k4[y] + wa_school_est$pri_58[y] + wa_school_est$pub_58[y] + wa_school_est$pri_912[y] + wa_school_est$pub_912[y]
+      br_pri_prek <- br_pri_prek + wa_school_est$pri_prek[y]
+      br_pub_prek <- br_pub_prek + wa_school_est$pub_prek[y]
+      br_pri_k4 <- br_pri_k4 + wa_school_est$pri_k4[y]
+      br_pub_k4 <- br_pub_k4 + wa_school_est$pub_k4[y]
+      br_pri_58 <- br_pri_58 + wa_school_est$pri_58[y]
+      br_pub_58 <- br_pub_58 + wa_school_est$pub_58[y]
+      br_pri_912 <- br_pri_912 + wa_school_est$pri_912[y]
+      br_pub_912 <- br_pub_912 + wa_school_est$pub_912[y]
+    } #Max lat, Max long
+      else if ((st_bbox(wa_school_est$geometry[y])[4] > (branches$latitude[x]-0.0167)) & (st_bbox(wa_school_est$geometry[y])[4] < (branches$latitude[x]+0.0167)) & (st_bbox(wa_school_est$geometry[y])[3] > (branches$longitude[x]-0.0167) & st_bbox(wa_school_est$geometry[y])[3] < (branches$longitude[x]+0.0167))) {
+      t <- t + wa_school_est$pri_prek[y] + wa_school_est$pub_prek[y] + wa_school_est$pri_k4[y] + wa_school_est$pub_k4[y] + wa_school_est$pri_58[y] + wa_school_est$pub_58[y] + wa_school_est$pri_912[y] + wa_school_est$pub_912[y]
+      br_pri_prek <- br_pri_prek + wa_school_est$pri_prek[y]
+      br_pub_prek <- br_pub_prek + wa_school_est$pub_prek[y]
+      br_pri_k4 <- br_pri_k4 + wa_school_est$pri_k4[y]
+      br_pub_k4 <- br_pub_k4 + wa_school_est$pub_k4[y]
+      br_pri_58 <- br_pri_58 + wa_school_est$pri_58[y]
+      br_pub_58 <- br_pub_58 + wa_school_est$pub_58[y]
+      br_pri_912 <- br_pri_912 + wa_school_est$pri_912[y]
+      br_pub_912 <- br_pub_912 + wa_school_est$pub_912[y]
+    } else {
+      t <- t+0
+    }
+  }
+  #For the branch, save the temp variables in the branch table as entry
+  branches$school_total[x] <- t
+  branches$school_pri_prek[x] <- br_pri_prek
+  branches$school_pri_prek_per[x] <- (br_pri_prek/t)*100
+  branches$school_pub_prek[x] <- br_pub_prek
+  branches$school_pub_prek_per[x] <- (br_pub_prek/t)*100
+  branches$school_pri_k4[x] <- br_pri_k4
+  branches$school_pri_k4_per[x] <- (br_pri_k4/t)*100
+  branches$school_pub_k4[x] <- br_pub_k4
+  branches$school_pub_k4_per[x] <- (br_pub_k4/t)*100
+  branches$school_pri_58[x] <- br_pri_58
+  branches$school_pri_58_per[x] <- (br_pri_58/t)*100
+  branches$school_pub_58[x] <- br_pub_58
+  branches$school_pub_58_per[x] <- (br_pub_58/t)*100
+  branches$school_pri_912[x] <- br_pri_912
+  branches$school_pri_912_per[x] <- (br_pri_912/t)*100
+  branches$school_pub_912[x] <- br_pub_912
+  branches$school_pub_912_per[x] <- (br_pub_912/t)*100
+}
+branches
+```
+
+
+### Mapping School Enrollment (Private versus Public Schools)
+
+For the school map, I needed to find a different way to color the census tracts to show a difference between private and public-school enrollment. Instead of doing a continuous color scale for the polygons' colors, this map has 3 bins of color that are used to indicate whether a group is a majority private, majority public, or a mix of both. The values used for the color map are the difference in percentages for the number of students enrolled for that age group and school type. To get a legend that is labeled for the colors, the labels and colors have to be manually defined. Everything else is mapped the same way as the age, income, and languages maps.
+
+
+```{r}
+#School Type
+#Adapted from: https://juliasilge.com/blog/using-tidycensus/
+
+#Create color palette for census data legend (ranges from -100 to 100 based on difference on percentage between two school types)
+pal_school <- colorBin(palette = "viridis", domain = c(-100,100), bins=3, pretty = FALSE)
+
+#Create intereactive map
+leaflet() %>% 
+  #Base Map
+  addProviderTiles("CartoDB.Positron") %>% 
+  #Center view on the City of Seattle
+  setView(lat = 47.6062, lng = -122.3321, zoom = 11) %>%
+  #Add the prek school colored polygon layer (name layer with group attribute)
+  addPolygons(data=wa_school_est, popup = paste("<i> Tract ", str_extract(wa_school_est$NAME, "[0-9]+"),"</i> <br>","<b>Estimated students <br> enrolled (preschool): </b><br>", (wa_school_est$prek_tot),"<br><b>School Type (preschool): </b><br>Private:",
+                            round(wa_school_est$pri_prek_per,digits = 2), "% <br> Public: ", round(wa_school_est$pub_prek_per,digits = 2),"%"),
+                stroke = TRUE,
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.7,
+                color = ~ pal_school(prek_dif), group = "Preschool") %>%
+  #add a lyer for grades k-4
+  addPolygons(data=wa_school_est, popup = paste("<i> Tract ", str_extract(wa_school_est$NAME, "[0-9]+"),"</i> <br>","<b>Estimated students <br> enrolled (K-4): </b><br>", (wa_school_est$k4_tot),"<br><b>School Type (K-4): </b><br>Private:",
+                            round(wa_school_est$pri_k4_per,digits = 2), "% <br> Public: ", round(wa_school_est$pub_k4_per,digits = 2),"%"),
+                stroke = TRUE,
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.7,
+                color = ~ pal_school(k4_dif), group = "K-4") %>%
+  #add a layer for grades 5-8
+  addPolygons(data=wa_school_est, popup = paste("<i> Tract ", str_extract(wa_school_est$NAME, "[0-9]+"),"</i> <br>","<b>Estimated students <br> enrolled (5-8): </b><br>", (wa_school_est$g58_tot),"<br><b>School Type (5-8): </b><br>Private:",
+                            round(wa_school_est$pri_58_per,digits = 2), "% <br> Public: ", round(wa_school_est$pub_58_per,digits = 2),"%"),
+                stroke = TRUE,
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.7,
+                color = ~ pal_school(g58_dif), group = "5-8") %>%
+  #add a layer for grades 9-12
+  addPolygons(data=wa_school_est, popup = paste("<i> Tract ", str_extract(wa_school_est$NAME, "[0-9]+"),"</i> <br>","<b>Estimated students <br> enrolled (9-12): </b><br>", (wa_school_est$g912_tot),"<br><b>School Type (9-12): </b><br>Private:",
+                            round(wa_school_est$pri_912_per,digits = 2), "% <br> Public: ", round(wa_school_est$pub_912_per,digits = 2),"%"),
+                stroke = TRUE,
+              weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.7,
+                color = ~ pal_school(g912_dif), group = "9-12") %>%
+  #Create a legend for color of difference in school types
+  addLegend("bottomleft", 
+              #Create similar colored legend with custom labels
+              labels=c("Mostly Private","Mixed", "Mostly Public"),
+              colors=c("yellow", "cadetblue", "#571B7E"),
+              title = "Majority Enrollment",
+              opacity = 1) %>% 
+  #Add layer of SPL branch location icons
+  addAwesomeMarkers(branches$longitude, branches$latitude, 
+                    icon=icons, popup= paste("<i>", branches$name, "</i> <br>",
+                                             "FOR TRACTS WITHIN <br> 1 MILE OF BRANCH: <br>",
+                                             "<b>Estimated students <br> enrolled (all levels):</b>","<br>",
+                            round(branches$school_total, digits = 2), "<br>",
+                            "<b>School Type (all levels): </b><br>Private:",
+ round(((branches$school_pri_prek+branches$school_pri_k4+branches$school_pri_58+branches$school_pri_912)/branches$school_total)*100,digits = 2) , "% <br>",
+                            "Public: ", round(((branches$school_pub_prek+branches$school_pub_k4+branches$school_pub_58+branches$school_pub_912)/branches$school_total)*100,digits = 2), "%"), group = "SPL Branches") %>% 
+  # Layers control
+  addLayersControl(
+    baseGroups = c("Preschool", "K-4", "5-8", "9-12"),
+    overlayGroups = c("SPL Branches"),
+    options = layersControlOptions(collapsed = FALSE)) %>% 
+  #add zoom buttons for regions
+  addHomeButton(ext = extent(c(-122.40,-122.30, 47.50, 47.60)), layer.name = "SWR") %>% 
+  addHomeButton(ext = extent(c(-122.34,-122.25, 47.51, 47.61)), layer.name = "SER")  %>%
+  addHomeButton(ext = extent(c(-122.37,-122.32, 47.63, 47.73)), layer.name = "NWR") %>% 
+  addHomeButton(ext = extent(c(-122.34,-122.29, 47.65, 47.74)), layer.name = "NER") %>%
+  addHomeButton(ext = extent(c(-122.42,-122.33, 47.63, 47.68)), layer.name = "MCW") %>%
+  addHomeButton(ext = extent(c(-122.33,-122.27, 47.60, 47.66)), layer.name = "MCE") %>%
+  addHomeButton(ext = extent(c(-122.36,-122.31, 47.59, 47.62)), layer.name = "DWN")
+  
+```
+
+# Shiny App 
+
+To easily share the maps I created, I decided to use the Shiny package in R to create an application with all the maps and some explanatory text. This allows the above maps to stay interactive and presents the maps outside the R code it is based on. I uploaded my app onto shinyapps.io so that anyone could access the maps without having to download this R code or the R code for the Shiny app. These maps are available at: https://kostler.shinyapps.io/SPL-Seattle-Census-Data/. To avoid calling the API every time and having to do all the calculations in this notebook, I saved each needed table to a .csv file in the folder /shiny_app so that the Shiny app could use it.
+
+```{r}
+#Save datasets for shinyapp
+#Age data
+saveRDS(wa_age_est, file="shiny-app/wa_age_est_app.rds")
+saveRDS(age_median_1, file="shiny-app/age_median_app.rds")
+
+#Income Data
+saveRDS(wa_income, file="shiny-app/wa_income_app.rds")
+
+#Language data
+saveRDS(wa_lang_est, file="shiny-app/wa_lang_est_app.rds")
+
+#School data
+saveRDS(wa_school_est, file="shiny-app/wa_school_app.rds")
+
+#Save new branches file for shiny app
+write.csv(branches, "shiny-app/branches_app.csv")
+```
+
