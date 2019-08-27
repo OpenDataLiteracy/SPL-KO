@@ -1,8 +1,7 @@
-# Beyond the Census: Using Census Data in Public Libraries
-
 
 Also available at: https://medium.com/open-data-literacy/beyond-the-census-using-census-data-in-public-libraries-333e2643fd21  
 
+# Beyond the Census: Using Census Data in Public Libraries
 
 This summer, as an intern for the Open Data Literacy project at the University of Washington Information School, I have been working with the Seattle Public Library (SPL) to transform external open datasets into actionable information for frontline staff. There are many interesting and relevant open datasets available about the city of Seattle that can help librarians understand the community that surrounds their library and plan better services and outreach. However, these datasets can be hard for librarians to use in their everyday workflows because the datasets are often stored in machine-readable formats that, while ideal for storage and sharing, can be difficult for humans to find the information they need without the help of software. My goal for this summer is to use the programming language R and other mapping software to create visualizations, charts, and relevant statistics for the staff at SPL branches so they can use the information in their planning process and create services that are tailored to their community.
 
