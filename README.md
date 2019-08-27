@@ -11,4 +11,4 @@
 - Blog Post: Coming Soon!
 
 ## Presentations:
-- [ODL Showcase *August 16th, 2019*](https://github.com/OpenDataLiteracy/SPL-KO/blob/master/presentations/ODL_showcasepres.pdf)
+- [ODL Showcase](https://github.com/OpenDataLiteracy/SPL-KO/blob/master/presentations/ODL_showcasepres.pdf) *August 16th, 2019*
