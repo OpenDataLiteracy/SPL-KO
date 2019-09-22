@@ -13,7 +13,7 @@
 
 - Blog Post: [Beyond the Census: Using Census Data in Public Libraries](https://medium.com/open-data-literacy/beyond-the-census-using-census-data-in-public-libraries-333e2643fd21)
 
-- Blog Post: Coming Soon!
+- Blog Post: [Using Open Data to Understand Communities Around Seattle Public Libraries](https://medium.com/open-data-literacy/using-open-data-to-understand-communities-around-seattle-public-libraries-fa3f9a96f3be)
 
 ## Presentations:
 - *August 16th, 2019*: [ODL Showcase](https://github.com/OpenDataLiteracy/SPL-KO/blob/master/presentations/ODL_showcasepres.pdf)
