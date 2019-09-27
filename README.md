@@ -17,3 +17,4 @@
 
 ## Presentations:
 - *August 16th, 2019*: [ODL Showcase](https://github.com/OpenDataLiteracy/SPL-KO/blob/master/presentations/ODL_showcasepres.pdf)
+- *September 24th, 2019*: [SPL Southeast Region](https://github.com/OpenDataLiteracy/SPL-KO/blob/master/presentations/SPL_southeastpres.pdf)
